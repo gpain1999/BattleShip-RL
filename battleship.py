@@ -1,45 +1,40 @@
 import random
 import numpy as np
-
+from typing import Dict
 from board import Board
 from boat import Boat
 from agent import Agent
 # Game configuration
-BOATS = {
-    "carrier" : 5,
-    "battleship" : 4,
-    "submarine" : 3,
-    "cruiser" : 3,
-    "destroyer" : 2
-}
-
 GAME_CONFIG = {
     "width" : 8,
-    "length" : 8,
-    "carrier" : 1,
-    "battleship" : 1,
-    "cruiser" : 1,
-    "submarine" : 1,
-    "destroyer" : 1
+    "height" : 8,
+    "boats": {
+    "carrier" : {"size" : 5, "number" : 1},
+    "battleship" : {"size" : 5, "number" : 1},
+    "cruiser" : {"size" : 5, "number" : 1},
+    "submarine" : {"size" : 5, "number" : 1},
+    "destroyer" : {"size" : 5, "number" : 1}
+    }
 }
 
 
 
-def place_boats():
-    board = Board()
-    for boat_name, boat_size in BOATS.items():
-        num_boats = GAME_CONFIG[boat_name]
+def place_boats(game_config):
+    board = Board(game_config["width"], game_config["height"])
+    for boat_name, boat_config in game_config["boats"].items():
+        num_boats = boat_config["number"]
+        boat_size = boat_config["size"]
         for i in range(num_boats):
             while True:
-                row = random.randint(0, GAME_CONFIG["width"] - 1)
-                col = random.randint(0, GAME_CONFIG["length"] - 1)
+                row = random.randint(0, game_config["width"] - 1)
+                col = random.randint(0, game_config["height"] - 1)
                 orientation = random.choice(['horizontal', 'vertical'])
                 if orientation == 'horizontal':
-                    if col + boat_size > GAME_CONFIG["length"]:
+                    if col + boat_size > game_config["height"]:
                         continue
                     position = (row, col)
                 else:
-                    if row + boat_size > GAME_CONFIG["width"]:
+                    if row + boat_size > game_config["width"]:
                         continue
                     position = (row, col)
                 if not board.grid[position[0]:position[0]+boat_size, position[1]:position[1]+1].any():
@@ -47,15 +42,19 @@ def place_boats():
                     break
     return board
 
-def play_game(agent:Agent):
-    board = place_boats()
+def play_game(game_config:Dict, agent:Agent):
+    board = place_boats(game_config)
+    nb_move = 0
     while not board.is_game_over():
-        state = board.get_state()
-        valid_moves = board.get_valid_moves()
-        action = agent.choose_action(state, valid_moves)
+        nb_move += 1
+        state = board
+        action = agent.choose_action(state)
         row, col = action
         reward = board.fire_shot(row, col)
-        next_state = board.get_state()
+        next_state = board
         agent.update(state, action, next_state, reward)
+        print(nb_move)
+        print(board.grid)
+        print(board.is_game_over())
     return board.boats
 

@@ -18,10 +18,16 @@ class Board:
         else:
             self.grid[position[0]:position[0]+size, position[1]] = 1
 
-    def is_valid_move(self, row, col):
+    def is_in_grid(self,row,col):
         if row < 0 or row >= self.width or col < 0 or col >= self.height:
             return False
-        if self.grid[row, col] == -1 or self.grid[row, col] == 1:
+        else : 
+            return True
+
+    def is_valid_move(self, row, col):
+        if not self.is_in_grid(row,col):
+            return False
+        if self.grid[row, col] == -1 or self.grid[row, col] == 2:
             return False
         return True
 
@@ -32,14 +38,14 @@ class Board:
                 hit = True
                 break
         if hit:
-            self.grid[row, col] = -1
+            self.grid[row, col] = 2
             return 1  # reward for hitting a boat
         else:
             self.grid[row, col] = -1
             return -0.5  # penalty for missing a boat
 
     def get_state(self):
-        return self.grid.flatten()
+        return self.grid
 
     def get_valid_moves(self):
         valid_moves = []
@@ -58,9 +64,28 @@ class Board:
     def is_boat_sunk(self, boat):
         for row in range(self.width):
             for col in range(self.height):
-                if boat.is_hit(row, col) and self.grid[row, col] != -1:
+                if boat.is_hit(row, col) and self.grid[row, col] != 2:
                     return False
         return True
 
+    def is_adjacent_move(self, row, col):
+        if (self.is_in_grid(row + 1, col) and (self.grid[row + 1, col] == 2)) or \
+        (self.is_in_grid(row - 1, col) and (self.grid[row - 1, col] == 2)) or \
+        (self.is_in_grid(row, col + 1) and (self.grid[row, col + 1] == 2)) or \
+        (self.is_in_grid(row, col - 1) and (self.grid[row, col - 1] == 2)) :
+            return True
+        else : 
+            return False
+    
+    
+    
+    def get_adjacent_moves(self):
+        adjacent_move = []
+        for row in range(self.width):
+            for col in range(self.height):
+                if self.is_valid_move(row,col) and self.is_adjacent_move(row, col):
+                    adjacent_move.append((row, col))
+        return adjacent_move
+        
     def print_board(self):
         print(self.grid)
